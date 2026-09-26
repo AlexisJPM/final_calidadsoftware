@@ -3,6 +3,7 @@ from selenium.webdriver.edge.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 import time
 
 casos_prueba = [
@@ -29,6 +30,12 @@ casos_prueba = [
         "last_name": "Parrales",
         "email": "josuejemplo",
         "comments": "Cuarto mensjae de prueba"
+    },
+    {
+        "first_name": "Bryan",
+        "last_name": "Parrales",
+        "email": "bryan@ejemplo.com",
+        "comments": ""
     }
 ]
 
@@ -50,7 +57,7 @@ time.sleep(3)
 contact_us_link = driver.find_element(By.ID, "contact-us")
 driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", contact_us_link)
 time.sleep(3)
-contact_us_link.click()
+driver.execute_script("arguments[0].click();", contact_us_link)
 
 driver.switch_to.window(driver.window_handles[-1])
 
@@ -85,10 +92,16 @@ for caso in casos_prueba:
     submit_button.click()
 
     tiempo_inicial = time.time()
-    WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.XPATH, "//div[@id='contact_reply']/h1"))
-        )
-    print(f"Tiempo de respuesta del formulario: {time.time() - tiempo_inicial} segundos")
+    try:
+        reply_element = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.XPATH, "//div[@id='contact_reply']/h1"))
+            )
+        print(f"Tiempo de respuesta del formulario: {time.time() - tiempo_inicial} segundos")
+        mensaje = reply_element.text
+    except TimeoutException:
+        mensaje = "El formulario no se envio: el navegador bloqueo el envio por validacion nativa del campo (sin formato valido)."
+
+    print(f"Caso {caso['first_name']} {caso['last_name']} (email: '{caso['email']}', comments: '{caso['comments']}'): {mensaje}")
 
     time.sleep(3)
 
